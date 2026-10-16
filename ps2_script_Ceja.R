@@ -45,5 +45,25 @@ unemp <- unemp |>
 unemp <- unemp |>
   arrange(region, date) |>
   group_by(region) |>
-  mutate(unemployment_rate_change = ___ - lag(___)) |>
+  mutate(unemployment_rate_change = unemployment_rate - lag(unemployment_rate)) |>
   ungroup()
+
+unemp_summary <- unemp |>
+  group_by(region) |>
+  summarize(
+    mean_rate = mean(unemployment_rate, na.rm = TRUE),
+    min_rate  = min(unemployment_rate,  na.rm = TRUE),
+    max_rate  = max(unemployment_rate,  na.rm = TRUE)
+  )
+view(unemp_summary)
+
+unemp_recent  <- unemp |>
+  filter(date >= as.Date("2020-01-01"))
+unemp_recent_summary <- unemp_recent |>
+  group_by(region) |>
+  summarize(
+    mean_rate = mean(unemployment_rate, na.rm = TRUE),
+    min_rate  = min(unemployment_rate,  na.rm = TRUE),
+    max_rate  = max(unemployment_rate,  na.rm = TRUE)
+  )
+view(unemp_recent_summary)

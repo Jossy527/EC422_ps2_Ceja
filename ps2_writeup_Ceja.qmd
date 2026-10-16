@@ -1,0 +1,118 @@
+---
+title: "Problem Set 2"
+author: "Josephine Ceja"
+date: 10/15/2026
+format:
+ html:
+  toc: true
+  embeded-resources: true
+---
+
+\*\*GitHub repo:\*\* \<<https://github.com/Jossy527/EC422_ps2_Ceja.git>[ ](https://github.com/Jossy527/EC422_ps2_Ceja.git )\>
+
+## ##Data
+
+The problem set contains monthly unemployment rate data from the Federal Reserve Economic Data (FRED) database. It includes the U.S. national unemployment rate and unemployment rates of Oregon, California, Texas, and New York. The series it contains runs from January 1976 through the most recent observation available.
+
+```{r}
+#| echo: false
+library(tidyquant)
+library(tidyverse)
+
+unemp_raw = read_rds("data/unemp_raw.rds")
+head(unemp_raw)
+
+```
+
+## ##Wrangling
+
+This sections includes a summary of the unemployment dataset using many wrangling steps. The tables below show the result of this.
+
+Summary by Region\
+The table shows the mean, minimum, and maximum unemployment rates for each region.
+
+```{r}
+#| echo: false
+library(knitr)
+kable(unemp_summary)
+```
+
+Recent Summary (Since 2015)\
+The table summarizes the the most recent unemployment rates by restricting data to January 2025 and forward.
+
+```{r}
+#| echo: false
+kable(unemp_recent_summary)
+```
+
+Largest Month-over-Month Increases (Excluding 2020)\
+The table shows the top five (plus ties) largest month-over-month increases in unemployment rates, excluding all observations from 2020.
+
+```{r}
+#| echo: false
+kable(unemp_top_increases_no_covid)
+```
+
+Largest Month-over-Month Decreases (Excluding 2020)\
+The table shows the top five (plus ties) largest month-over-month decreases in unemployment rates, excluding all observations from 2020 to avoid distortions related to COVID.
+
+```{r}
+#| echo: false
+kable(unemp_top_decreases_no_covid)
+```
+
+## ##Visualization
+
+Here, I visualize the patterns in unemployment using the wrangled datasets. The plots below will show trends over time, regional differences, and patterns that exclude the COVID period.
+
+1\. Line Plot of Unemployment Over Time: this shows the unemployment rates for each region
+
+```{r}
+#| echo: false
+library(ggplot2)
+
+ggplot(unemp, aes(x = date, y = unemployment_rate, color = region)) +
+  geom_line() +        # or geom_col(), geom_point(), etc.
+  labs(title = "Unemployment Rate by Region Over Time",
+       x = "Date", y = "Unemployment Rate") +
+  theme_minimal()
+```
+
+2\. Faceted Line Plot by Region: this shows each region's unemployment rate, viewed separately to compare easier.
+
+```{r}
+#| echo: false
+ggplot(unemp, aes(x = date, y = unemployment_rate, color = region)) +
+  geom_line() +
+  facet_wrap(~ region) +
+  labs(title = "Unemployment Rate by Region Over Time",
+       x = "Date", y = "Unemployment Rate") +
+  theme_minimal()
+```
+
+3\. Bar Chart of Mean Unemployment Rate: this shows the average unemployment rates by region, going from lowest to highest.
+
+```{r}
+#| echo: false
+library(forcats)
+ggplot(unemp_summary, aes(x = fct_reorder(region, mean_rate), y = mean_rate)) +
+  geom_col() +
+  labs(title = "Mean Unemployment Rate by Region",
+       x = "Region", y = "Mean Unemployment Rate") +
+  theme_minimal()
+```
+
+4\. Unemployment Rate (Excluding 2020): this plot was chosen to show how unemployment behaved over the years, excluding 2020 to make the trends easier to observe without the extreme pandemic spike.
+
+```{r}
+#| echo: false
+ggplot(unemp_no_covid, aes(x = date, y = unemployment_rate, color = region)) +
+  geom_line() +
+  labs(title = "Unemployment Rate by Region Over Time (Excluding 2020)",
+       x = "Date", y = "Unemployment Rate") +
+  theme_minimal()
+```
+
+## ##Reflection
+
+While working through the problem set, I got more comfortable with data wrangling and visualization. It was understandable what the given codes were doing, which helped when it came to filling in blanks or working on a code without it being given. There was times when I did not know what to do with a function, so I ended up asking the GitHub Copilot assistant to explain how to use some of them. Thanks to that, I feel like I can confidently use them the next time they are needed. The most challenging part was managing Git and Github because some of my commits would not appear in the repository. But after solving the issues, I feel like I better understand how Git works and how I can interpret errors. Overall, I finish this assignment understanding how R works and how to use the tools seen in the problem set.

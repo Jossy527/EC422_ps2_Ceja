@@ -18,6 +18,7 @@ view(unemp_raw)
 
 unemp_raw = read_rds("data/unemp_raw.rds")
 
+# 4.1. Wrangle your Data
 unemp <- unemp_raw |>
   rename(unemployment_rate = price) |>
   mutate(
@@ -30,6 +31,7 @@ unemp <- unemp_raw |>
     )
   )
 
+# 4.2. Wrangle your Data
 unemp <- unemp |>
   arrange(region, date) |>
   group_by(region) |>
@@ -67,3 +69,51 @@ unemp_recent_summary <- unemp_recent |>
     max_rate  = max(unemployment_rate,  na.rm = TRUE)
   )
 view(unemp_recent_summary)
+
+# 4.3. Find the Extremes
+unemp_top_increases <- unemp |> 
+  slice_max(unemployment_rate_change, n = 5, with_ties = TRUE)
+view(unemp_top_increases)
+unemp_top_decreases <- unemp |>
+  slice_min(unemployment_rate_change, n = 5, with_ties = TRUE)
+view(unemp_top_decreases)
+
+# 4.4. Find the Extremes Excluding 2020
+unemp_no_covid <- unemp |>
+  filter(year(date) != 2020) 
+unemp_top_increases_no_covid <- unemp_no_covid |>
+  slice_max(unemployment_rate_change, n = 5, with_ties = TRUE)
+view(unemp_top_increases_no_covid)
+unemp_top_decreases_no_covid <- unemp_no_covid |>
+  slice_min(unemployment_rate_change, n = 5, with_ties = TRUE)
+view(unemp_top_decreases_no_covid)
+
+# 5.1: Produce a Line Plot
+ggplot(unemp, aes(x = date, y = unemployment_rate, color = region)) +
+  geom_line() +        # or geom_col(), geom_point(), etc.
+  labs(title = "Unemployment Rate by Region Over Time",
+       x = "Date", y = "Unemployment Rate") +
+  theme_minimal()
+
+# 5.2: Produce Individual Line Plots
+ggplot(unemp, aes(x = date, y = unemployment_rate, color = region)) +
+  geom_line() +
+  facet_wrap(~ region) +
+  labs(title = "Unemployment Rate by Region Over Time",
+       x = "Date", y = "Unemployment Rate") +
+  theme_minimal()
+
+# 5.3: Produce Bar Chart
+library(forcats)
+ggplot(unemp_summary, aes(x = fct_reorder(region, mean_rate), y = mean_rate)) +
+  geom_col() +
+  labs(title = "Mean Unemployment Rate by Region",
+       x = "Region", y = "Mean Unemployment Rate") +
+  theme_minimal()
+
+# 5.4: Your Choice
+ggplot(unemp_no_covid, aes(x = date, y = unemployment_rate, color = region)) +
+  geom_line() +
+  labs(title = "Unemployment Rate by Region Over Time (Excluding 2020)",
+       x = "Date", y = "Unemployment Rate") +
+  theme_minimal()

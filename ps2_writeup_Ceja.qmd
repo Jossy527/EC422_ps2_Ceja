@@ -33,8 +33,47 @@ The table shows the mean, minimum, and maximum unemployment rates for each regio
 
 ```{r}
 #| echo: false
-library(knitr)
-kable(unemp_summary)
+library(tidyquant)
+library(tidyverse)
+unemp <- unemp_raw |>
+  rename(unemployment_rate = price) |>
+  mutate(
+    region = case_when(
+      symbol == "UNRATE" ~ "United States",
+      symbol == "ORUR"    ~ "Oregon",
+      symbol == "CAUR" ~ "California",
+      symbol == "TXUR" ~ "Texas",
+      symbol == "NYUR" ~ "New York"
+    )
+  )
+
+unemp <- unemp |>
+  arrange(region, date) |>
+  group_by(region) |>
+  mutate(
+    unemployment_rate = replace(
+      unemployment_rate,
+      date == as.Date("2025-10-01"),
+      unemployment_rate[date == as.Date("2025-09-01")]
+    )
+  ) |>
+  ungroup()
+
+unemp <- unemp |>
+  arrange(region, date) |>
+  group_by(region) |>
+  mutate(unemployment_rate_change = unemployment_rate - lag(unemployment_rate)) |>
+  ungroup()
+
+unemp_summary <- unemp |>
+  group_by(region) |>
+  summarize(
+    mean_rate = mean(unemployment_rate, na.rm = TRUE),
+    min_rate  = min(unemployment_rate,  na.rm = TRUE),
+    max_rate  = max(unemployment_rate,  na.rm = TRUE)
+  )
+head(unemp_summary)
+
 ```
 
 Recent Summary (Since 2015)\
@@ -42,7 +81,17 @@ The table summarizes the the most recent unemployment rates by restricting data 
 
 ```{r}
 #| echo: false
-kable(unemp_recent_summary)
+unemp_recent  <- unemp |>
+  filter(date >= as.Date("2020-01-01"))
+unemp_recent_summary <- unemp_recent |>
+  group_by(region) |>
+  summarize(
+    mean_rate = mean(unemployment_rate, na.rm = TRUE),
+    min_rate  = min(unemployment_rate,  na.rm = TRUE),
+    max_rate  = max(unemployment_rate,  na.rm = TRUE)
+  )
+head(unemp_recent)
+
 ```
 
 Largest Month-over-Month Increases (Excluding 2020)\
@@ -50,7 +99,9 @@ The table shows the top five (plus ties) largest month-over-month increases in u
 
 ```{r}
 #| echo: false
-kable(unemp_top_increases_no_covid)
+unemp_top_increases <- unemp |> 
+  slice_max(unemployment_rate_change, n = 5, with_ties = TRUE)
+head(unemp_top_increases)
 ```
 
 Largest Month-over-Month Decreases (Excluding 2020)\
@@ -58,7 +109,9 @@ The table shows the top five (plus ties) largest month-over-month decreases in u
 
 ```{r}
 #| echo: false
-kable(unemp_top_decreases_no_covid)
+unemp_top_decreases <- unemp |>
+  slice_min(unemployment_rate_change, n = 5, with_ties = TRUE)
+head(unemp_top_decreases)
 ```
 
 ## ##Visualization
@@ -106,6 +159,12 @@ ggplot(unemp_summary, aes(x = fct_reorder(region, mean_rate), y = mean_rate)) +
 
 ```{r}
 #| echo: false
+unemp_no_covid <- unemp |>
+  filter(year(date) != 2020) 
+unemp_top_increases_no_covid <- unemp_no_covid |>
+  slice_max(unemployment_rate_change, n = 5, with_ties = TRUE)
+unemp_top_decreases_no_covid <- unemp_no_covid |>
+  slice_min(unemployment_rate_change, n = 5, with_ties = TRUE)
 ggplot(unemp_no_covid, aes(x = date, y = unemployment_rate, color = region)) +
   geom_line() +
   labs(title = "Unemployment Rate by Region Over Time (Excluding 2020)",
